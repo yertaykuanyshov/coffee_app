@@ -25,9 +25,11 @@ final names = [
 final coffees = List.generate(12, (index) {
   final idx = index + 1;
 
+  final List<double> priceList = [1.99, 2.99, 5.99, 3.85]..shuffle();
+
   return Coffee(
     name: names[Random().nextInt(names.length)],
     image: 'assets/images/$idx.png',
-    price: 1.99,
+    price: priceList[0],
   );
 }).toList();

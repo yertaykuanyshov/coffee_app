@@ -1,5 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import 'coffee.dart';
 
@@ -34,7 +37,10 @@ class _HomePageState extends State<HomePage> {
     viewportFraction: 0.35,
   );
 
+  final _pageTextController = PageController();
+
   double _currentPage = 0.0;
+  double _textPage = 0.0;
 
   void _coffeeScrollListener() {
     setState(() {
@@ -42,16 +48,23 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void _textScrollListener() {
+    _textPage = _currentPage;
+  }
+
   @override
   void initState() {
     _pageCoffeeController.addListener(_coffeeScrollListener);
+    _pageTextController.addListener(_textScrollListener);
     super.initState();
   }
 
   @override
   void dispose() {
     _pageCoffeeController.removeListener(_coffeeScrollListener);
+    _pageTextController.removeListener(_textScrollListener);
     _pageCoffeeController.dispose();
+    _pageTextController.dispose();
 
     super.dispose();
   }
@@ -85,23 +98,22 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          Positioned(
-            left: 0,
-            top: 0,
-            right: 0,
-            height: 100,
-            child: Container(
-              color: Colors.red,
-            ),
-          ),
           Transform.scale(
             scale: 1.6,
             alignment: Alignment.bottomCenter,
             child: PageView.builder(
               controller: _pageCoffeeController,
               scrollDirection: Axis.vertical,
-              scrollBehavior: CupertinoScrollBehavior(),
               itemCount: coffees.length,
+              onPageChanged: (value) {
+                if (value < coffees.length) {
+                  _pageTextController.animateToPage(
+                    value,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.bounceInOut,
+                  );
+                }
+              },
               itemBuilder: (_, idx) {
                 if (idx == 0) {
                   return const SizedBox.shrink();
@@ -127,6 +139,45 @@ class _HomePageState extends State<HomePage> {
                   ),
                 );
               },
+            ),
+          ),
+          Positioned(
+            left: 0,
+            top: 10,
+            right: 0,
+            height: 100,
+            child: Column(
+              children: [
+                Expanded(
+                  child: PageView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    controller: _pageTextController,
+                    itemBuilder: (_, idx) {
+                      final opacity =
+                          (1 - (idx - _textPage).abs()).clamp(0.0, 1.0);
+                      return Opacity(
+                        opacity: opacity,
+                        child: Text(
+                          coffees[idx].name,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 35,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Text(
+                    "${coffees[_currentPage.toInt()].price}\$",
+                    style: const TextStyle(fontSize: 22),
+                    key: Key(coffees[_currentPage.toInt()].name),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
